@@ -1,0 +1,12 @@
+[package]
+name = "wyzOS_coreutils_ls"
+version = "0.1.0"
+authors = ["Tommy Lincoln <pajamapants3000@gmail.com>"]
+description = "BSD-like ls utility written in Rust"
+repository = "https://github.com/pajamapants3000/wyzOS_coreutils_ls"
+readme = "README.md"
+license = "MIT"
+license-file = "LICENSE"
+
+[dependencies]
+
