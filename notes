@@ -1,0 +1,66 @@
+wyzOS_coreutils_ls notes
+
+This is where I will try to gather my ideas for the writing of this program
+
+First of all, there are a LOT of options to cover! I can pretty well follow
+the implementation of ls in Redox (though I intend to write my own as much
+as I can and maybe refer to Redox for guidance), but the many options
+available in the BSD implementation are left out of Redox.
+
+My thinking is: all of the options either determine which items to print, or
+how the items are printed. So, I will be generating an iterator from rules
+that decide what to print, and passing each item through the options that
+decide how each item should look. Which comes first? I though the latter first,
+unless the iterator items can contain enough information to account for all
+possible formats in the printout. But ultimately I will need to find some
+way of getting all of the info I need from some kind of object, probably a
+DirEntry.
+
+Actually, read_dir returns an iterator, ReadDir, of items of type DirEntry,
+which seem to be able to pull whatever info I will need. So it will be a
+matter of processing each item as I go through the iteration (once I have
+obtained the iterator) and deciding first: Are we printing this? And, if so,
+HOW?
+Actually, we can combine these. Each test against an option will have a
+function that applies whatever it wants to the item to be printed, and
+instead of running a separate check on options for whether or not to print,
+we just set their resulting action to change the item to the empty string.
+Finally (I think?) there may be additional functions to execute on each (or
+certain) item(s). For example, if we want to print recursively, then on each
+item we would execute a function that determines if the item is a directory,
+and if so executes ls on that item.
+
+So, let's have two bitmasks: flags that determine how an item is printed,
+and flags that determine which functions are executed on an item. The flags,
+of course, are set by the invocation options. We would also have a struct
+to contain arguments to the flags, but none of them seem to take arguments!
+
+Some Linux/GNU options that I'm not seeing in the BSD version that I might
+like to include are file sizes in user-determined units, printing in
+color, ... so we may need a struct to contain any flag arguments. At the
+very least, the first item can contain the directory we are listing.
+
+Procedure:
+1. process the arguments into a workable format
+set bitmask flags for display_flags
+set bitmask flags for action_flags
+set flag arguments in struct FlagArgs
+2. take the directory we are listing from these arguments
+first item of FlagArgs
+3. obtain the ReadDir iterator
+read_dir(FlagArgs)
+4. Process the iterator, item by item
+4a. Determine how we print this item
+set line to item
+for each flag in display_flags
+    if flag is ON
+        pass line to flag function
+        replace line with return value
+4b. Execute any actions
+for each flag in action_flags
+    if flag is ON
+        pass relevant FlagArgs and line to flag function
+        (these functions will not be allowed to change line, but may use
+                its value)
+5. Print item (possibly "")
+
